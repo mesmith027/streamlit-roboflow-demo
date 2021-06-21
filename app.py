@@ -119,7 +119,7 @@ def logo_detection():
 
 
         def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
-            image = frame.to_ndarray(format="rgb24")
+            image = frame.to_ndarray(format="bgr24")
             
             # Resize (while maintaining the aspect ratio) to improve speed and save bandwidth
             # height, width, channels = image.shape
@@ -133,16 +133,15 @@ def logo_detection():
 
             # start = time.time()
             resp = requests.post(url, data=img_str, headers=headers)
-            #time.sleep(0.2)
             # time.sleep(time.time() - start)
 
             preds = resp.json()
-            print(preds)
+            print(preds) # debug info
             detections = preds['predictions']
 
             annotated_image = self._annotate_image(image, detections)
 
-            return av.VideoFrame.from_ndarray(annotated_image, format="rgb24")
+            return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
     webrtc_ctx = webrtc_streamer(
         key="logo-detection",
@@ -173,10 +172,3 @@ if __name__ == "__main__":
     fsevents_logger.setLevel(logging.WARNING)
 
     main()
-
-        
-
-
-
-
-
