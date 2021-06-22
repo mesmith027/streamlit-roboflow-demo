@@ -1,5 +1,7 @@
 # streamlit-roboflow-demo
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/snehankekre/streamlit-roboflow-demo/app.py)
+
 TBD
 
 ## Installation :balloon:
