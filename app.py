@@ -63,7 +63,7 @@ def main():
 def logo_detection():
     """Streamlit Logo Detection with Roboflow
     """
-    ROBOFLOW_SIZE = 416
+    ROBOFLOW_SIZE = 720
     parts = []
     url_base = 'https://detect.roboflow.com/'
     endpoint = 'srwebinar/1'
@@ -100,7 +100,7 @@ def logo_detection():
 
                 draw.rectangle([
                     x1, y1, x2, y2
-                ], outline=color, width=5)
+                ], outline=color, width=3)
 
                 if True:
                     text = box['class']
@@ -122,21 +122,20 @@ def logo_detection():
             image = frame.to_ndarray(format="bgr24")
             
             # Resize (while maintaining the aspect ratio) to improve speed and save bandwidth
-            # height, width, channels = image.shape
-            # scale = ROBOFLOW_SIZE / max(height, width)
-            # image = cv2.resize(image, (round(scale * width), round(scale * height)))
+            height, width, channels = image.shape
+            scale = ROBOFLOW_SIZE / max(height, width)
+            image = cv2.resize(image, (round(scale * width), round(scale * height)))
 
             # Encode image to base64 string
             retval, buffer = cv2.imencode('.jpg', image)
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
-            # start = time.time()
+            start = time.time()
             resp = requests.post(url, data=img_str, headers=headers)
-            # time.sleep(time.time() - start)
+            print('\npost took ' + str(time.time() - start))
 
             preds = resp.json()
-            print(preds) # debug info
             detections = preds['predictions']
 
             annotated_image = self._annotate_image(image, detections)
