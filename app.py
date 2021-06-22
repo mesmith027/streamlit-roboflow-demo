@@ -64,6 +64,8 @@ def logo_detection():
     """Streamlit Logo Detection with Roboflow
     """
     ROBOFLOW_SIZE = 720
+    FRAMERATE = 30
+    BUFFER = 0.1
     parts = []
     url_base = 'https://detect.roboflow.com/'
     endpoint = 'srwebinar/1'
@@ -131,14 +133,21 @@ def logo_detection():
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
-            start = time.time()
+            # start = time.time()
             resp = requests.post(url, data=img_str, headers=headers)
-            print('\npost took ' + str(time.time() - start))
+            # print('\npost took ' + str(time.time() - start))
 
             preds = resp.json()
             detections = preds['predictions']
 
             annotated_image = self._annotate_image(image, detections)
+
+            # self._futures.append(annotated_image)
+
+            # if len(self._futures) < BUFFER * FRAMERATE:
+            #     return av.VideoFrame.from_ndarray(image, format="bgr24")
+            
+            # annotated_image = self._futures.pop(0)
 
             return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
