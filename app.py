@@ -71,7 +71,7 @@ def logo_detection():
     endpoint = 'srwebinar/1'
     access_token = '?api_key=RZZN2hwLn9O50hUmoA6I'
     format = '&format=json'
-    confidence = '&confidence=10'
+    confidence = '&confidence=50'
     stroke='&stroke=1'
     parts.append(url_base)
     parts.append(endpoint)
@@ -82,6 +82,8 @@ def logo_detection():
     url = ''.join(parts)
     headers = {'accept': 'application/json'}
 
+    # Map detected class bounding box to unique colors
+    color_map = { "dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A" }
 
     class RoboflowVideoProcessor(VideoProcessorBase):
 
@@ -94,7 +96,7 @@ def logo_detection():
             font = ImageFont.load_default()
 
             for box in detections:
-                color = "#4892EA"
+                color = color_map[box['class']]
                 x1 = box['x'] - box['width'] / 2
                 x2 = box['x'] + box['width'] / 2
                 y1 = box['y'] - box['height'] / 2
@@ -133,21 +135,12 @@ def logo_detection():
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
-            # start = time.time()
             resp = requests.post(url, data=img_str, headers=headers)
-            # print('\npost took ' + str(time.time() - start))
 
             preds = resp.json()
             detections = preds['predictions']
 
             annotated_image = self._annotate_image(image, detections)
-
-            # self._futures.append(annotated_image)
-
-            # if len(self._futures) < BUFFER * FRAMERATE:
-            #     return av.VideoFrame.from_ndarray(image, format="bgr24")
-            
-            # annotated_image = self._futures.pop(0)
 
             return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
