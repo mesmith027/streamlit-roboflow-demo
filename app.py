@@ -63,33 +63,49 @@ def main():
 def logo_detection():
     """Streamlit Logo Detection with Roboflow
     """
+
+    ##########
+    ##### Set up sidebar
+    ##########
+
+    st.sidebar.write('### Streamlit Logo Detection')
+
+    ## Add in sliders.
+    CONFIDENCE_THRESHOLD = st.sidebar.slider('Confidence threshold:', 0, 100, 50, 5, help="What is the minimum acceptable confidence level for displaying a bounding box?")
+    OVERLAP_THRESHOLD = st.sidebar.slider('Overlap threshold:', 0, 100, 30, 5, help="What is the maximum amount of overlap permitted between visible bounding boxes?")
+
+    image = Image.open('./images/roboflow_logo.png')
+    st.sidebar.image(image,
+                    use_column_width=True)
+
+    image = Image.open('./images/streamlit_logo.png')
+    st.sidebar.image(image,
+                    use_column_width=True)
+
+
     ROBOFLOW_SIZE = 720
-    FRAMERATE = 30
-    BUFFER = 0.1
-    parts = []
     url_base = 'https://detect.roboflow.com/'
     endpoint = 'srwebinar/1'
     access_token = '?api_key=RZZN2hwLn9O50hUmoA6I'
     format = '&format=json'
-    confidence = '&confidence=50'
-    stroke='&stroke=1'
-    parts.append(url_base)
-    parts.append(endpoint)
-    parts.append(access_token)
-    parts.append(format)
-    parts.append(confidence)
-    parts.append(stroke)
-    url = ''.join(parts)
     headers = {'accept': 'application/json'}
 
     # Map detected class bounding box to unique colors
     color_map = { "dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A" }
 
     class RoboflowVideoProcessor(VideoProcessorBase):
+        _overlap = OVERLAP_THRESHOLD
+        _confidence = CONFIDENCE_THRESHOLD
 
         def __init__(self) -> None:
-            None
+            self._overlap = OVERLAP_THRESHOLD
+            self._confidence = CONFIDENCE_THRESHOLD
 
+        def set_overlap_confidence(self, overlap, confidence):
+            self._overlap = overlap
+            self._confidence = confidence
+
+        # Draw bounding boxes from the inference API JSON output
         def _annotate_image(self, image, detections):
             image = Image.fromarray(image)
             draw = ImageDraw.Draw(image)
@@ -135,6 +151,17 @@ def logo_detection():
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
+            parts = []
+            overlap = f'&overlap={self._overlap}'
+            confidence = f'&confidence={self._confidence}'
+            parts.append(url_base)
+            parts.append(endpoint)
+            parts.append(access_token)
+            parts.append(format)
+            parts.append(overlap)
+            parts.append(confidence)
+            url = ''.join(parts)
+
             resp = requests.post(url, data=img_str, headers=headers)
 
             preds = resp.json()
@@ -151,6 +178,9 @@ def logo_detection():
         video_processor_factory=RoboflowVideoProcessor,
         async_processing=True,
     )
+
+    if webrtc_ctx.video_transformer:
+        webrtc_ctx.video_transformer.set_overlap_confidence(OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD)
 
 
 if __name__ == "__main__":
