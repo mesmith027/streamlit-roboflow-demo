@@ -82,7 +82,6 @@ def logo_detection():
     st.sidebar.image(image,
                     use_column_width=True)
 
-
     ROBOFLOW_SIZE = 720
     url_base = 'https://detect.roboflow.com/'
     endpoint = 'srwebinar/1'
