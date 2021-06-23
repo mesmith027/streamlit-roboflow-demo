@@ -61,36 +61,47 @@ def main():
 
 
 def logo_detection():
-    """Streamlit Logo Detection with Roboflow
-    """
+    """Streamlit Logo Detection with Roboflow"""
 
     ##########
     ##### Set up sidebar
     ##########
 
-    st.sidebar.write('### Streamlit Logo Detection')
+    st.sidebar.write("### Streamlit Logo Detection")
 
     ## Add in sliders.
-    CONFIDENCE_THRESHOLD = st.sidebar.slider('Confidence threshold:', 0, 100, 50, 5, help="What is the minimum acceptable confidence level for displaying a bounding box?")
-    OVERLAP_THRESHOLD = st.sidebar.slider('Overlap threshold:', 0, 100, 30, 5, help="What is the maximum amount of overlap permitted between visible bounding boxes?")
+    CONFIDENCE_THRESHOLD = st.sidebar.slider(
+        "Confidence threshold:",
+        0,
+        100,
+        50,
+        5,
+        help="What is the minimum acceptable confidence level for displaying a bounding box?",
+    )
+    OVERLAP_THRESHOLD = st.sidebar.slider(
+        "Overlap threshold:",
+        0,
+        100,
+        30,
+        5,
+        help="What is the maximum amount of overlap permitted between visible bounding boxes?",
+    )
 
-    image = Image.open('./images/roboflow_logo.png')
-    st.sidebar.image(image,
-                    use_column_width=True)
+    image = Image.open("./images/roboflow_logo.png")
+    st.sidebar.image(image, use_column_width=True)
 
-    image = Image.open('./images/streamlit_logo.png')
-    st.sidebar.image(image,
-                    use_column_width=True)
+    image = Image.open("./images/streamlit_logo.png")
+    st.sidebar.image(image, use_column_width=True)
 
     ROBOFLOW_SIZE = 720
-    url_base = 'https://detect.roboflow.com/'
-    endpoint = 'srwebinar/1'
-    access_token = '?api_key=RZZN2hwLn9O50hUmoA6I'
-    format = '&format=json'
-    headers = {'accept': 'application/json'}
+    url_base = "https://detect.roboflow.com/"
+    endpoint = "srwebinar/1"
+    access_token = "?api_key=RZZN2hwLn9O50hUmoA6I"
+    format = "&format=json"
+    headers = {"accept": "application/json"}
 
     # Map detected classes to uniquely colored bounding boxes
-    color_map = { "dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A" }
+    color_map = {"dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A"}
 
     class RoboflowVideoProcessor(VideoProcessorBase):
         _overlap = OVERLAP_THRESHOLD
@@ -111,60 +122,59 @@ def logo_detection():
             font = ImageFont.load_default()
 
             for box in detections:
-                color = color_map[box['class']]
-                x1 = box['x'] - box['width'] / 2
-                x2 = box['x'] + box['width'] / 2
-                y1 = box['y'] - box['height'] / 2
-                y2 = box['y'] + box['height'] / 2
+                color = color_map[box["class"]]
+                x1 = box["x"] - box["width"] / 2
+                x2 = box["x"] + box["width"] / 2
+                y1 = box["y"] - box["height"] / 2
+                y2 = box["y"] + box["height"] / 2
 
-                draw.rectangle([
-                    x1, y1, x2, y2
-                ], outline=color, width=3)
+                draw.rectangle([x1, y1, x2, y2], outline=color, width=3)
 
                 if True:
-                    text = box['class']
+                    text = box["class"]
                     text_size = font.getsize(text)
 
                     # set button size + 10px margins
-                    button_size = (text_size[0]+20, text_size[1]+20)
-                    button_img = Image.new('RGBA', button_size, color)
+                    button_size = (text_size[0] + 20, text_size[1] + 20)
+                    button_img = Image.new("RGBA", button_size, color)
                     # put text on button with 10px margins
                     button_draw = ImageDraw.Draw(button_img)
-                    button_draw.text((10, 10), text, font=font, fill=(255,255,255,255))
+                    button_draw.text(
+                        (10, 10), text, font=font, fill=(255, 255, 255, 255)
+                    )
 
                     # put button on source image in position (0, 0)
                     image.paste(button_img, (int(x1), int(y1)))
             return np.asarray(image)
 
-
         def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
             image = frame.to_ndarray(format="bgr24")
-            
+
             # Resize (while maintaining the aspect ratio) to improve speed and save bandwidth
             height, width, channels = image.shape
             scale = ROBOFLOW_SIZE / max(height, width)
             image = cv2.resize(image, (round(scale * width), round(scale * height)))
 
             # Encode image to base64 string
-            retval, buffer = cv2.imencode('.jpg', image)
+            retval, buffer = cv2.imencode(".jpg", image)
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
             parts = []
-            overlap = f'&overlap={self._overlap}'
-            confidence = f'&confidence={self._confidence}'
+            overlap = f"&overlap={self._overlap}"
+            confidence = f"&confidence={self._confidence}"
             parts.append(url_base)
             parts.append(endpoint)
             parts.append(access_token)
             parts.append(format)
             parts.append(overlap)
             parts.append(confidence)
-            url = ''.join(parts)
+            url = "".join(parts)
 
             resp = requests.post(url, data=img_str, headers=headers)
 
             preds = resp.json()
-            detections = preds['predictions']
+            detections = preds["predictions"]
 
             annotated_image = self._annotate_image(image, detections)
 
@@ -179,7 +189,9 @@ def logo_detection():
     )
 
     if webrtc_ctx.video_processor:
-        webrtc_ctx.video_processor.set_overlap_confidence(OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD)
+        webrtc_ctx.video_processor.set_overlap_confidence(
+            OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD
+        )
 
 
 if __name__ == "__main__":
