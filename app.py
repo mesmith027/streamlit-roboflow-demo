@@ -82,7 +82,6 @@ def logo_detection():
     st.sidebar.image(image,
                     use_column_width=True)
 
-
     ROBOFLOW_SIZE = 720
     url_base = 'https://detect.roboflow.com/'
     endpoint = 'srwebinar/1'
@@ -90,7 +89,7 @@ def logo_detection():
     format = '&format=json'
     headers = {'accept': 'application/json'}
 
-    # Map detected class bounding box to unique colors
+    # Map detected classes to uniquely colored bounding boxes
     color_map = { "dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A" }
 
     class RoboflowVideoProcessor(VideoProcessorBase):
@@ -179,8 +178,8 @@ def logo_detection():
         async_processing=True,
     )
 
-    if webrtc_ctx.video_transformer:
-        webrtc_ctx.video_transformer.set_overlap_confidence(OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD)
+    if webrtc_ctx.video_processor:
+        webrtc_ctx.video_processor.set_overlap_confidence(OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD)
 
 
 if __name__ == "__main__":
