@@ -36,10 +36,11 @@ from streamlit_webrtc import (
     webrtc_streamer,
 )
 
-HERE = Path(__file__).parent
-
+### setting up the logger to log messages created by the script to help debug in main()
 logger = logging.getLogger(__name__)
 
+#### For the webrtc plug in, this is setting the default values for the widget,
+#### incluing removing the audio
 WEBRTC_CLIENT_SETTINGS = ClientSettings(
     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
     media_stream_constraints={
@@ -50,6 +51,10 @@ WEBRTC_CLIENT_SETTINGS = ClientSettings(
 
 
 def main():
+    """
+    Main part of the script that defines the main method and calls the logo detection.
+    Also sets up a logger for debugging purposes.
+    """
     st.header("Real-time Streamlit Logo Detection with Roboflow")
 
     logo_detection()
@@ -87,15 +92,21 @@ def logo_detection():
         help="What is the maximum amount of overlap permitted between visible bounding boxes?",
     )
 
+    ### Adding in the Streamlit and Roboflow logos to the sidebar
     image = Image.open("./images/roboflow_logo.png")
     st.sidebar.image(image, use_column_width=True)
 
     image = Image.open("./images/streamlit_logo.png")
     st.sidebar.image(image, use_column_width=True)
 
+    ### Setting up the url and query parameters for roboflow endpoint
+    # the overlap and confidence query parameters are set withing the
+    # RoboflowVideoProcessor class, normally they would be hardcoded here but
+    # to get interactivity we had to add then after
     ROBOFLOW_SIZE = 720
     url_base = "https://detect.roboflow.com/"
     endpoint = "srwebinar/1"
+    ## remove random part and add your secret key here
     access_token = "?api_key=RZZN2hwLn9O50hUmoA6I"
     format = "&format=json"
     headers = {"accept": "application/json"}
@@ -108,10 +119,18 @@ def logo_detection():
         _confidence = CONFIDENCE_THRESHOLD
 
         def __init__(self) -> None:
+            """
+            Initalizes the value of the overlap and confidence thresholds based on user input,
+            from the sliders in the sidebar.
+            """
             self._overlap = OVERLAP_THRESHOLD
             self._confidence = CONFIDENCE_THRESHOLD
 
         def set_overlap_confidence(self, overlap, confidence):
+            """
+            updating the values of overlap and condidence based on slider values
+            once the video is running.
+            """
             self._overlap = overlap
             self._confidence = confidence
 
@@ -121,6 +140,10 @@ def logo_detection():
             draw = ImageDraw.Draw(image)
             font = ImageFont.load_default()
 
+            ### This is copied from the roboflow docs line (143-166):
+            ### https://docs.roboflow.com/inference/hosted-api#drawing-a-box-from-the-inference-api-json-output
+            ### line 143 was added to map the detected classes to unique colors
+            ### detection is list = [{'class', x,y,width,height}, repeating]
             for box in detections:
                 color = color_map[box["class"]]
                 x1 = box["x"] - box["width"] / 2
@@ -148,18 +171,28 @@ def logo_detection():
             return np.asarray(image)
 
         def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+            """
+            Recieves images and sends annotated images:
+            gets webcam image, does some preprocessing and calls the
+            annotated function above to put bounding boxes on the detections and
+            finally returns the annotated video frame.
+            """
             image = frame.to_ndarray(format="bgr24")
 
             # Resize (while maintaining the aspect ratio) to improve speed and save bandwidth
+            # roboflow_size is set in logo_detection when we set up the url and query parameters
+            # hardcoded to 720 currently
             height, width, channels = image.shape
             scale = ROBOFLOW_SIZE / max(height, width)
             image = cv2.resize(image, (round(scale * width), round(scale * height)))
 
-            # Encode image to base64 string
+            # Encode image to base64 string formats becasue that is what the
+            # endpoint expects
             retval, buffer = cv2.imencode(".jpg", image)
             img_str = base64.b64encode(buffer)
             img_str = img_str.decode("ascii")
 
+            ### construct the request url with the confidence and overlap
             parts = []
             overlap = f"&overlap={self._overlap}"
             confidence = f"&confidence={self._confidence}"
@@ -171,15 +204,23 @@ def logo_detection():
             parts.append(confidence)
             url = "".join(parts)
 
+            # making the post request to the roboflow endpoint with the url we just made
             resp = requests.post(url, data=img_str, headers=headers)
 
+            ## from the responce, we convert it to a JSON and get the perdictions
             preds = resp.json()
             detections = preds["predictions"]
 
+            ### finally, annotate the image
             annotated_image = self._annotate_image(image, detections)
 
+            ## return the image with the bounding boxes to the browser
             return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
+### reach out to compnent developer about 221-227
+## likely, jsut setting up the component itself, the mode to both send and recieve data
+# pass the WEBRTC_CLIENT_SETTINGS we chose and tell it to process the video
+# frames using the logic from the RoboflowVideoProcessor class
     webrtc_ctx = webrtc_streamer(
         key="logo-detection",
         mode=WebRtcMode.SENDRECV,
@@ -188,12 +229,13 @@ def logo_detection():
         async_processing=True,
     )
 
+## calling the overlap function with the actual values returned from the sliders
     if webrtc_ctx.video_processor:
         webrtc_ctx.video_processor.set_overlap_confidence(
             OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD
         )
 
-
+### the main program where we call the main method
 if __name__ == "__main__":
     import os
 
