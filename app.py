@@ -107,7 +107,9 @@ def logo_detection():
     url_base = "https://detect.roboflow.com/"
     endpoint = "srwebinar/1"
     ## remove random part and add your secret key here
-    access_token = "?api_key=RZZN2hwLn9O50hUmoA6I"
+    ## Create a .streamlit/secrets.toml with the entry, replacing YourKey with the key from Roboflow: api_key="YourKey"
+    ## Don't commit secrets.toml. On Sharing, add the same line to ☰ -> Settings -> Secrets
+    access_token = f'?api_key={st.secrets["api_key"]}'
     format = "&format=json"
     headers = {"accept": "application/json"}
 
