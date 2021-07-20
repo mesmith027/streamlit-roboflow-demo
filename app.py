@@ -105,7 +105,7 @@ def logo_detection():
     # to get interactivity we had to add then after
     ROBOFLOW_SIZE = 720
     url_base = "https://detect.roboflow.com/"
-    endpoint = "srwebinar/1"
+    endpoint = "merged_logos/2"
     ## remove random part and add your secret key here
     ## Create a .streamlit/secrets.toml with the entry, replacing YourKey with the key from Roboflow: api_key="YourKey"
     ## Don't commit secrets.toml. On Sharing, add the same line to ☰ -> Settings -> Secrets
@@ -114,7 +114,13 @@ def logo_detection():
     headers = {"accept": "application/json"}
 
     # Map detected classes to uniquely colored bounding boxes
-    color_map = {"dark logo": "#D41159", "old logo": "#1A85FF", "white logo": "#FFC20A"}
+    color_map = {
+        "dark logo": "#D41159",
+        "old logo": "#1A85FF",
+        "white logo": "#FFC20A",
+        "roboflow_logomark": "#1AFF1A",
+        "roboflow_wordmark": "#582832",
+    }
 
     class RoboflowVideoProcessor(VideoProcessorBase):
         _overlap = OVERLAP_THRESHOLD
@@ -219,10 +225,10 @@ def logo_detection():
             ## return the image with the bounding boxes to the browser
             return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
-### reach out to compnent developer about 221-227
-## likely, jsut setting up the component itself, the mode to both send and recieve data
-# pass the WEBRTC_CLIENT_SETTINGS we chose and tell it to process the video
-# frames using the logic from the RoboflowVideoProcessor class
+    ### reach out to compnent developer about 221-227
+    ## likely, jsut setting up the component itself, the mode to both send and recieve data
+    # pass the WEBRTC_CLIENT_SETTINGS we chose and tell it to process the video
+    # frames using the logic from the RoboflowVideoProcessor class
     webrtc_ctx = webrtc_streamer(
         key="logo-detection",
         mode=WebRtcMode.SENDRECV,
@@ -231,11 +237,12 @@ def logo_detection():
         async_processing=True,
     )
 
-## calling the overlap function with the actual values returned from the sliders
+    ## calling the overlap function with the actual values returned from the sliders
     if webrtc_ctx.video_processor:
         webrtc_ctx.video_processor.set_overlap_confidence(
             OVERLAP_THRESHOLD, CONFIDENCE_THRESHOLD
         )
+
 
 ### the main program where we call the main method
 if __name__ == "__main__":
