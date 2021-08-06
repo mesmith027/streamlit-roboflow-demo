@@ -100,9 +100,9 @@ def logo_detection():
     st.sidebar.image(image, use_column_width=True)
 
     ### Setting up the url and query parameters for roboflow endpoint
-    # the overlap and confidence query parameters are set withing the
+    # the overlap and confidence query parameters are set within the
     # RoboflowVideoProcessor class, normally they would be hardcoded here but
-    # to get interactivity we had to add then after
+    # to get interactivity we had to add them after
     ROBOFLOW_SIZE = 720
     url_base = "https://detect.roboflow.com/"
     endpoint = "merged_logos/2"
@@ -215,7 +215,7 @@ def logo_detection():
             # making the post request to the roboflow endpoint with the url we just made
             resp = requests.post(url, data=img_str, headers=headers)
 
-            ## from the responce, we convert it to a JSON and get the perdictions
+            ## from the responce, we convert it to a JSON and get the predictions
             preds = resp.json()
             detections = preds["predictions"]
 
@@ -226,8 +226,8 @@ def logo_detection():
             return av.VideoFrame.from_ndarray(annotated_image, format="bgr24")
 
     ### reach out to compnent developer about 221-227
-    ## likely, jsut setting up the component itself, the mode to both send and recieve data
-    # pass the WEBRTC_CLIENT_SETTINGS we chose and tell it to process the video
+    ## likely, just setting up the component itself, the mode to both send and recieve data
+    # pass the WEBRTC_CLIENT_SETTINGS we choose and tell it to process the video
     # frames using the logic from the RoboflowVideoProcessor class
     webrtc_ctx = webrtc_streamer(
         key="logo-detection",
